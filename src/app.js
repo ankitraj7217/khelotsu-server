@@ -1,8 +1,8 @@
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import UserRouter from "./routes/user.routes";
-import RoomRouter from "./routes/room.routes";
+import UserRouter from "./routes/user.routes.js";
+import RoomRouter from "./routes/room.routes.js";
 
 const app = express();
 

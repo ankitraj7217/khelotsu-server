@@ -1,13 +1,16 @@
 import { Router } from "express";
-import { verifyJWT } from "../middlewares/auth.middleware";
-import { registerUser, loginUser, logoutUser,refreshAccessToken } from "../controllers/user.controller";
+import { verifyJWT } from "../middlewares/auth.middleware.js";
+import { registerUser, loginUser, logoutUser,refreshAccessToken } from "../controllers/user.controller.js";
 
 const router = Router();
 
-router.post("/register").post(registerUser)
-router.post("/login").post(loginUser)
-router.post("/logout").post(verifyJWT, logoutUser)
-router.post("/refreshToken ").post(verifyJWT, refreshAccessToken)
+router.get("/test", (req, res) => {
+    res.status(200).send("OK");
+});
+router.post("/register", registerUser)
+router.post("/login", loginUser)
+router.post("/logout", verifyJWT, logoutUser)
+router.post("/refreshToken", verifyJWT, refreshAccessToken)
 
 
 export default router;

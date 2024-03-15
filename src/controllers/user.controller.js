@@ -1,7 +1,8 @@
-import { ApiError } from "../utils/ApiError";
-import { User } from "../models/user.model";
+import { ApiError } from "../utils/ApiError.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
+import { User } from "../models/user.model.js";
 import jwt from "jsonwebtoken";
-import { asyncHandler } from "../utils/asyncHandler";
+import { asyncHandler } from "../utils/asyncHandler.js";
 
 const generateAccessAndRefreshToken = async (userid = "", currUser) => {
     try {
@@ -11,13 +12,13 @@ const generateAccessAndRefreshToken = async (userid = "", currUser) => {
         } else {
             // We get a better stack trace if any error happened using exec and get an actual promise.
             // Read about it here: https://stackoverflow.com/a/68469848
-            user = await User.findOne().where("userid").equals(userid).exec();
+            user = await User.findOne().where("userid").equals(userid);
         }
         if (!user) {
             throw new ApiError(401, "No such id exists. Unauthorised access.")
         }
-        const accessToken = user.generateAccessToken();
-        const refreshToken = user.generateRefreshToken();
+        const accessToken = await user.generateAccessToken();
+        const refreshToken = await user.generateRefreshToken();
 
         user.refreshToken = refreshToken;
         await user.save({ validateBeforeSave: false })
@@ -29,50 +30,55 @@ const generateAccessAndRefreshToken = async (userid = "", currUser) => {
 }
 
 const registerUser = asyncHandler(async (req, res) => {
-    const { username, email, password } = req?.body;
+    try {
+        const { username, email, password } = req?.body;
 
-    if (
-        [username, email, password].some((field) => field?.trim() === "")
-    ) {
-        throw new ApiError(400, "All fields are required.");
-    }
+        if (
+            [username, email, password].some((field) => field?.trim() === "")
+        ) {
+            throw new ApiError(400, "All fields are required.");
+        }
 
-    const existedUser = User.findOne({
-        $or: [{ username }, { email }]
-    })
+        const existedUser = await User.findOne({
+            $or: [{ username }, { email }]
+        })
 
-    if (existedUser) {
-        throw new ApiError(400, "User already exists.");
-    }
+        if (existedUser) {
+            throw new ApiError(400, "User already exists.");
+        }
 
-    const createdUser = await User.create({
-        username: username.toLowerCase(),
-        email,
-        password
-    }).select("-password");
+        const createdUser = await User.create({
+            username: username.toLowerCase(),
+            email,
+            password
+        })
 
-    if (!createdUser) {
-        throw new ApiError(500, "Error while creating user.");
-    }
+        if (!createdUser) {
+            throw new ApiError(502, "Error while creating user.");
+        }
 
-    const { accessToken, refreshToken } = generateAccessAndRefreshToken("", createdUser);
+        const { accessToken, refreshToken } = await generateAccessAndRefreshToken("", createdUser);
 
-    const options = {
-        httpOnly: true,
-        secure: true
-    }
+        const options = {
+            httpOnly: true,
+            secure: true
+        }
 
-    return res.status(201)
+       res.status(201)
         .cookie("accessToken", accessToken, options)
         .cookie("refreshToken", refreshToken, options)
         .json(
             new ApiResponse(
-                200,
+                201,
                 createdUser,
                 "User registered successfully."
             )
         )
-
+    } catch (err) {
+        const errorDetails = new ApiError(err.statusCode ? err.statusCode : 500, err.message ? err.message : "Error while creating user.")
+        res.status(err.statusCode ? err.statusCode : 500)
+           .json({message: errorDetails.message});
+    }
 })
 
 const loginUser = asyncHandler(async (req, res) => {
@@ -151,23 +157,23 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
             throw new ApiError(401, "Unauthorised Access. Refresh token has expired or is malformed.")
         }
 
-        const user = User.findOne({userid: decodedToken.userid})
+        const user = User.findOne({ userid: decodedToken.userid })
 
         if (!user || user?.refreshToken !== requestRefreshToken) {
             throw new ApiError(401, "Invalid refresh token")
         }
 
-        const options ={
+        const options = {
             httpOnly: true,
             secure: true
         }
 
-        const {accessToken, refreshToken} = await generateAccessAndRefreshToken("", user);
+        const { accessToken, refreshToken } = await generateAccessAndRefreshToken("", user);
 
         return res.status(200)
-                  .cookie("accessToken", accessToken, options)
-                  .cookie("refreshToken", refreshToken, options)
-                  .json(new ApiResponse(200, {accessToken, refreshToken}, "Access token generated successfully."))
+            .cookie("accessToken", accessToken, options)
+            .cookie("refreshToken", refreshToken, options)
+            .json(new ApiResponse(200, { accessToken, refreshToken }, "Access token generated successfully."))
 
     } catch (error) {
         throw new ApiError(500, "Error while generating access token.")

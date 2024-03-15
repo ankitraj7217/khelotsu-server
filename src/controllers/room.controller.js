@@ -1,10 +1,8 @@
-import mongoose from "mongoose";
-import { ApiError } from "../utils/ApiError";
-import { ApiResponse } from "../utils/ApiResponse";
-import { Room } from "../models/room.model";
-import { Jwt } from "jsonwebtoken";
-import { asyncHandler } from "../utils/asyncHandler";
-import { User } from "../models/user.model";
+import { ApiError } from "../utils/ApiError.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
+import { Room } from "../models/room.model.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
+import { User } from "../models/user.model.js";
 
 //TODO: roomName is same as roomId -> Maybe, we can enhance this feature later on
 const createRoom = asyncHandler(async (req, res) => {

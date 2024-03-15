@@ -1,4 +1,4 @@
-import model, { Schema } from "mongoose";
+import {model, Schema } from "mongoose";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import { v4 as uuidv4 } from "uuid";
@@ -45,7 +45,7 @@ userSchema.pre("save", async function (next) {
     this.password = await bcrypt.hash(this.password, 8)
 })
 
-userSchema.methods.generateAccessToken = function() {
+userSchema.methods.generateAccessToken = async function() {
     return jwt.sign(
         {
             userid: this.userid,
@@ -59,7 +59,7 @@ userSchema.methods.generateAccessToken = function() {
     )
 }
 
-userSchema.methods.generateRefreshToken = function() {
+userSchema.methods.generateRefreshToken = async function() {
     return jwt.sign(
         {
             userid: this.userid
