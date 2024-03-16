@@ -3,9 +3,9 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import jwt from "jsonwebtoken";
 import { User } from "../models/user.model.js";
 
-export const verifyJWT = asyncHandler(async(req, _ , next) => {
+export const verifyJWT = asyncHandler(async(req, res , next) => {
     try {
-        const token = req.cookies?.accessToken || req.headers.get("Authorization")?.replace("Bearer ", "");
+        const token = req.cookies?.accessToken || req.headers["Authorization"]?.replace("Bearer ", "");
 
         if (!token) {
             throw new ApiError("401", "Unauthorised Access.");
@@ -30,8 +30,10 @@ export const verifyJWT = asyncHandler(async(req, _ , next) => {
     } catch (error) {
         if (error instanceof jwt.TokenExpiredError) {
             // 48 -> my favourite number :)
-            throw new ApiError(448, "Token expired. Please send refresh token.")
+            res.status(448)
+                .json({message: "Token expired. Please send refresh token."})
         }
-        throw new ApiError(401, error?.message || "Invalid access token.")
+        res.status(401)
+                .json({message: error?.message || "Invalid access token."})
     }
 })

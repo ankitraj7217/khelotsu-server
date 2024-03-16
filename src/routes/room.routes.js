@@ -4,8 +4,12 @@ import { addPersonsInRoom, createRoom, removePersonInRoom } from "../controllers
 
 const router = Router();
 
-router.post("/createRoom").post(verifyJWT, createRoom);
-router.post("/addUsersInRoom").post(verifyJWT, addPersonsInRoom);
-router.post("/removePersonInRoom").post(verifyJWT, removePersonInRoom);
+router.get("/test", (req, res) => {
+    res.status(200).send("OK");
+});
+
+router.post("/createRoom", verifyJWT, createRoom);
+router.post("/addUsersInRoom", verifyJWT, addPersonsInRoom);
+router.post("/removeUserInRoom", verifyJWT, removePersonInRoom);
 
 export default router;

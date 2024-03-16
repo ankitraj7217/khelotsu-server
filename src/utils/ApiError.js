@@ -22,4 +22,12 @@ class ApiError extends Error {
     }
 }
 
-export { ApiError }
+const getErrorStatusAndMessage = (err) => {
+    const errorDetails = new ApiError(err?.statusCode ? err.statusCode : 500, err?.message ? err.message : "Error while creating user.");
+    return {
+        statusCode: err.statusCode ? err.statusCode : 500,
+        message: errorDetails.message
+    }
+}
+
+export { ApiError, getErrorStatusAndMessage }
