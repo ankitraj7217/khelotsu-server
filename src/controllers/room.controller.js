@@ -9,7 +9,7 @@ const createRoom = asyncHandler(async (req, res) => {
     try {
         const { roomName } = req?.body;
         if (!roomName || roomName.length === 0) {
-            return new ApiError(400, "Room Name is required.")
+            throw new ApiError(400, "Room Name is required.")
         }
         const existingRoom = await Room.findOne({ roomId: roomName })
 
