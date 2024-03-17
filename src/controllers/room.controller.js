@@ -165,7 +165,6 @@ const personsAllowedInRoom = asyncHandler(async(req, res) => {
 
         // Combine generatorUser and permittedUsers into a single list
         const allUsers = [generatorUser, ...permittedUsers];
-        console.log(allUsers, generatorUser, permittedUsers);
 
         // Check if the user making the request is in the list of permitted users
         const isUserPermitted = allUsers.some(user => user.username === req.user.username);
