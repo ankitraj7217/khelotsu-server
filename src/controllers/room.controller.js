@@ -39,7 +39,7 @@ const createRoom = asyncHandler(async (req, res) => {
 })
 
 
-// permittedUsers: userName
+// permittedUsers: username
 const addPersonsInRoom = asyncHandler(async (req, res) => {
     try {
         const { roomName, permittedUsers } = req?.body;
@@ -129,4 +129,90 @@ const removePersonInRoom = asyncHandler(async (req, res) => {
     }
 });
 
-export { createRoom, addPersonsInRoom, removePersonInRoom }
+const personsAllowedInRoom = asyncHandler(async(req, res) => {
+    try {
+        const { roomName } = req.body;
+
+        if (!roomName || roomName.length == 0) {
+            throw new ApiError(404, "Please send a valid room name.");
+        }
+
+        // Find the room by its name and populate the generatorUserID and joineeUserIDs
+        const room = await Room.findOne({ roomId: roomName }).populate("generatorUserID joineeUserIDs").exec();
+        if (!room) {
+            throw new ApiError(404, "Room doesn't exist.");
+        }
+
+        // // Check if the user making the request is the generator of the room
+        // not required.
+        // if (room.generatorUserID.username !== req.user.username) {
+        //     throw new ApiError(401, "Unauthorized Access. You can't view users in someone else's room.");
+        // }
+
+
+
+        // Retrieve user IDs and usernames of permitted users
+        const permittedUsers = room.joineeUserIDs.map(user => ({
+            userId: user.userid,
+            username: user.username
+        }));
+
+        // Include the generatorUserID in the response
+        const generatorUser = {
+            userId: room.generatorUserID.userid,
+            username: room.generatorUserID.username
+        };
+
+        // Combine generatorUser and permittedUsers into a single list
+        const allUsers = [generatorUser, ...permittedUsers];
+        console.log(allUsers, generatorUser, permittedUsers);
+
+        // Check if the user making the request is in the list of permitted users
+        const isUserPermitted = allUsers.some(user => user.username === req.user.username);
+        if (!isUserPermitted) {
+            throw new ApiError(401, "Unauthorized Access. You are not permitted to view users in this room.");
+        }
+
+        return res.status(200)
+                .json(new ApiResponse(200, allUsers, "Permitted users in the room."));
+    } catch (err) {
+        const errorDetails = getErrorStatusAndMessage(err);
+        res.status(errorDetails.statusCode)
+            .json({ message: errorDetails.message });
+    }
+});
+
+
+const isPersonAllowedInRoom = asyncHandler(async(req, res) => {
+    try {
+        const { roomName } = req.body;
+
+        if (!roomName) {
+            throw new ApiError(400, "Please provide both username and room name.");
+        }
+
+        // Find the room by its name
+        const room = await Room.findOne({ roomId: roomName }).populate("generatorUserID").exec();
+        if (!room) {
+            throw new ApiError(404, "Room doesn't exist.");
+        }
+
+        // // Check if the user making the request is the generator of the room
+        // not required here
+        // if (room.generatorUserID.username !== req.user.username) {
+        //     throw new ApiError(401, "Unauthorized Access. You can't check users in someone else's room.");
+        // }
+
+        // Check if the user is in the room
+        const isAllowed = room.joineeUserIDs.includes(req.user._id) || room.generatorUserID.username === req.user.username;
+
+        return res.status(200).json(new ApiResponse(200, { isAllowed }, "User permission checked."));
+    } catch (err) {
+        const errorDetails = getErrorStatusAndMessage(err);
+        res.status(errorDetails.statusCode)
+            .json({ message: errorDetails.message });
+    }
+});
+
+
+export { createRoom, addPersonsInRoom, removePersonInRoom, personsAllowedInRoom, isPersonAllowedInRoom }
