@@ -55,9 +55,9 @@ const addPersonsInRoom = asyncHandler(async (req, res) => {
         if (!room) {
             throw new ApiError(404, "Room doesn't exist")
         }
-        // user details always comes with accesToken
+        // user details always comes with accesToken. 400 to prevent logout.
         if (room.generatorUserID.username !== req.user.username) {
-            throw new ApiError(401, "Unauthorised Access. You can't edit someone else's room.")
+            throw new ApiError(400, "You can't edit someone else's room.")
         }
 
         //TODO: can be made more specific -> which user doesn't exist
@@ -97,9 +97,13 @@ const removePersonInRoom = asyncHandler(async (req, res) => {
             throw new ApiError(404, "Room doesn't exist.");
         }
 
-        // Check if the user making the request is the generator of the room
+        // Check if the user making the request is the generator of the room. 400 to prevent logout.
         if (room.generatorUserID.username !== req.user.username) {
-            throw new ApiError(401, "Unauthorized Access. You can't edit someone else's room.");
+            throw new ApiError(400, "You can't edit someone else's room.");
+        }
+
+        if (req.user.username === userToRemove) {
+            throw new ApiError(400, "You can't exit from your created room.");
         }
 
         // Find the user to remove
@@ -153,13 +157,13 @@ const personsAllowedInRoom = asyncHandler(async(req, res) => {
 
         // Retrieve user IDs and usernames of permitted users
         const permittedUsers = room.joineeUserIDs.map(user => ({
-            userId: user.userid,
+            userid: user.userid,
             username: user.username
         }));
 
         // Include the generatorUserID in the response
         const generatorUser = {
-            userId: room.generatorUserID.userid,
+            userid: room.generatorUserID.userid,
             username: room.generatorUserID.username
         };
 
@@ -169,7 +173,8 @@ const personsAllowedInRoom = asyncHandler(async(req, res) => {
         // Check if the user making the request is in the list of permitted users
         const isUserPermitted = allUsers.some(user => user.username === req.user.username);
         if (!isUserPermitted) {
-            throw new ApiError(401, "Unauthorized Access. You are not permitted to view users in this room.");
+            // to ensure user doesn't gets logged out if by mistake entered a room. therefore, not sending 401
+            throw new ApiError(400, "You are not permitted to view users in this room.");
         }
 
         return res.status(200)
