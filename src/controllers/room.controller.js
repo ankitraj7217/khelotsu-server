@@ -209,8 +209,9 @@ const isPersonAllowedInRoom = asyncHandler(async(req, res) => {
 
         // Check if the user is in the room
         const isAllowed = room.joineeUserIDs.includes(req.user._id) || room.generatorUserID.username === req.user.username;
-
+        
         return res.status(200).json(new ApiResponse(200, { isAllowed }, "User permission checked."));
+
     } catch (err) {
         const errorDetails = getErrorStatusAndMessage(err);
         res.status(errorDetails.statusCode)
