@@ -6,6 +6,7 @@ import cookieParser from "cookie-parser";
 import UserRouter from "./routes/user.routes.js";
 import RoomRouter from "./routes/room.routes.js";
 import { socketMiddlewareValidation } from "./middlewares/socket.middleware.js";
+import { emitInitialTTTSymbol, emitTTTPos } from "./games/gamesocketutils/tictactoe.gamesocketutils.js";
 
 const app = express();
 const httpServer = http.createServer(app);
@@ -28,8 +29,9 @@ const handleChatMessage = (socket, roomName, msg) => {
 // Dynamic namespaces to create rooms
 socketIO.use(socketMiddlewareValidation).on('connection', (socket) => {
     const roomName = socket?.roomName;
+    const user = socket?.user;
 
-    socket.on('join_room', (joiningRoomName) => {
+    socket.on("join_room", (joiningRoomName) => {
         if (joiningRoomName !== roomName) {
             socket.emit("error", "You can't connect to this room");
             socket.disconnect();
@@ -41,10 +43,18 @@ socketIO.use(socketMiddlewareValidation).on('connection', (socket) => {
     });
 
 
-    socket.on('send_chat_message', (msg) => {
+    socket.on("send_chat_message", (msg) => {
         console.log(`Message received in ${roomName}: ${msg}`);
         handleChatMessage(socket, roomName, msg);
     });
+
+    socket.on("request_ttt_symbol", (msg) => {
+        emitInitialTTTSymbol(socketIO, roomName, msg);
+    })
+
+    socket.on("send_ttt_pos", (msg) => {
+        emitTTTPos(socketIO, roomName, user?.username, msg);
+    })
 
     socket.on('disconnect', () => {
         console.log('User disconnected');
