@@ -7,6 +7,7 @@ import UserRouter from "./routes/user.routes.js";
 import RoomRouter from "./routes/room.routes.js";
 import { socketMiddlewareValidation } from "./middlewares/socket.middleware.js";
 import { emitInitialTTTSymbol, emitTTTPos } from "./games/gamesocketutils/tictactoe.gamesocketutils.js";
+import { emitChessPos, emitInitialChessSymbol } from "./games/gamesocketutils/chess.gamesocketutils.js";
 
 const app = express();
 const httpServer = http.createServer(app);
@@ -54,6 +55,14 @@ socketIO.use(socketMiddlewareValidation).on('connection', (socket) => {
 
     socket.on("send_ttt_pos", (msg) => {
         emitTTTPos(socketIO, roomName, user?.username, msg);
+    })
+
+    socket.on("request_chess_symbol", (msg) => {
+        emitInitialChessSymbol(socketIO, roomName, msg);
+    })
+
+    socket.on("send_chess_pos", (msg) => {
+        emitChessPos(socketIO, roomName, user?.username, msg);
     })
 
     socket.on('disconnect', () => {

@@ -13,10 +13,6 @@ class Game {
         throw new Error("Please implement makeMove method");
     }
 
-    isValidMove(player, ...args) {
-        throw new Error("Please implement isValidMove method");
-    }
-
     setCurrentPlayer() {
         throw new Error("Please implement setCurrentPlayer method");
     }

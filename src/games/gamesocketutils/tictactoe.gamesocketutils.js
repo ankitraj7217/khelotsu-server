@@ -2,7 +2,7 @@ import { tttMaintainer } from "../maintainers/tictactoe.maintainer.js";
 
 const emitInitialTTTSymbol = (io, roomName, receivedMsg) => {
     try {
-        // although further validation can be put to check if bpth players are allowed or not.
+        // although further validation can be put to check if both players are allowed or not.
         const game = tttMaintainer.createNewGame(roomName, JSON.parse(receivedMsg));
         const response = JSON.stringify({status: 200, 
                 data: {
@@ -38,7 +38,7 @@ const emitTTTPos = (io, roomName, username, receivedMsg) => {
         io.in(roomName).emit("receive_ttt_pos", JSON.stringify(response));
     } catch (err) {
         const response = {status: 400, error: err?.message};
-        io.in(roomName).emit("receive_ttt_symbol", JSON.stringify(response));
+        io.in(roomName).emit("receive_ttt_pos", JSON.stringify(response));
     }
 }
 
