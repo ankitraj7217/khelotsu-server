@@ -25,11 +25,13 @@ import {
   sendDisconnectUserName,
 } from "./routes/socket.routes.js";
 
+const allowedOrigins = process.env.ALLOWED_CORS_ORIGIN.split(',');
+
 const app = express();
 const httpServer = http.createServer(app);
 const socketIO = new Server(httpServer, {
   cors: {
-    origin: "*", // Allow requests from any origin
+    origin: allowedOrigins, // Allow requests from any origin
     methods: ["GET", "POST"], // Allow only specified methods
     // Additional CORS options can be specified here
   },
@@ -108,12 +110,18 @@ socketIO.on("connect_error", (err) => {
   console.error("Socket connection error:", err.message);
 });
 
-app.use(
-  cors({
-    origin: "*",
-    credentials: true,
-  })
-);
+const corsOptions = {
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true
+};
+
+app.use(cors(corsOptions));
 
 app.use(express.json({ limit: "16kb" }));
 app.use(express.urlencoded({ extended: true, limit: "16kb" }));
