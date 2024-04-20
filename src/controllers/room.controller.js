@@ -45,40 +45,40 @@ const addPersonsInRoom = asyncHandler(async (req, res) => {
         const { roomName, permittedUsers } = req?.body;
 
         if (!roomName || roomName.length == 0) {
-            throw new ApiError(404, "Please send valid room name")
+            throw new ApiError(404, "Please send a valid room name");
         }
         if (!Array.isArray(permittedUsers) || permittedUsers.length === 0) {
-            throw new ApiError(404, "Please send user ids list")
+            throw new ApiError(404, "Please send a list of user ids");
         }
 
-        const room = await Room.findOne({roomId: roomName}).populate("generatorUserID").exec()
+        const room = await Room.findOne({ roomId: roomName }).populate("generatorUserID").exec();
         if (!room) {
-            throw new ApiError(404, "Room doesn't exist")
+            throw new ApiError(404, "Room doesn't exist");
         }
-        // user details always comes with accesToken. 400 to prevent logout.
+        
         if (room.generatorUserID.username !== req.user.username) {
-            throw new ApiError(400, "You can't edit someone else's room.")
+            throw new ApiError(400, "You can't edit someone else's room.");
         }
 
-        //TODO: can be made more specific -> which user doesn't exist
-        const existingUsers = await User.find({ username: {$in: permittedUsers}}).exec();
+        // Check which users exist
+        const existingUsers = await User.find({ username: { $in: permittedUsers } }).exec();
         if (existingUsers.length !== permittedUsers.length) {
-            throw new ApiError(404, "Some users doesn't exist. Please check.")
+            throw new ApiError(404, "Some users don't exist. Please check.");
         }
 
-        room.joineeUserIDs = existingUsers.map(ele => ele._id)
+        // Append new users to existing joineeUserIDs
+        const newJoineeUserIDs = existingUsers.map(user => user._id);
+        room.joineeUserIDs = [...new Set([...room.joineeUserIDs, ...newJoineeUserIDs])];
 
-        room.save()
+        await room.save();
 
-        return res.status(201)
-                  .json(new ApiResponse(201, {roomName}, "Users permitted."));
+        return res.status(201).json(new ApiResponse(201, { roomName }, "Users permitted."));
 
     } catch (err) {
-        const errorDetails = getErrorStatusAndMessage(err)
-        res.status(errorDetails.statusCode)
-            .json({ message: errorDetails.message });
+        const errorDetails = getErrorStatusAndMessage(err);
+        res.status(errorDetails.statusCode).json({ message: errorDetails.message });
     }
-})
+});
 
 // Send username
 const removePersonInRoom = asyncHandler(async (req, res) => {
