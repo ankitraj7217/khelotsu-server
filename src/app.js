@@ -130,4 +130,8 @@ app.use(cookieParser());
 app.use("/api/v1/users", UserRouter);
 app.use("/api/v1/rooms", RoomRouter);
 
+app.get("/api/v1/start", (_, res) => {
+  res.status(200).send({status: "OK"});
+})
+
 export { socketIO, httpServer };
